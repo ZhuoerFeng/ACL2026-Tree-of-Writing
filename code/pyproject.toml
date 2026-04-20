@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tow-eval"
+version = "0.1.0"
+description = "Tree-of-Writing: Holistic Evaluation for LLM Writing Capability"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openai>=1.0.0",
+    "pyyaml>=6.0",
+    "jieba>=0.42",
+    "rouge-chinese>=1.0.3",
+    "nltk>=3.8",
+    "tqdm>=4.60",
+]
+
+[project.scripts]
+tow-split = "tow.cli:split_data"
+tow-eval = "tow.cli:run_tow"
+tow-baseline = "tow.cli:run_baseline"
+
+[tool.setuptools.packages.find]
+include = ["tow*"]
