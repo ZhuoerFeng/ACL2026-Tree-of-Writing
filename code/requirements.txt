@@ -1,0 +1,6 @@
+openai>=1.0.0
+pyyaml>=6.0
+jieba>=0.42
+rouge-chinese>=1.0.3
+nltk>=3.8
+tqdm>=4.60

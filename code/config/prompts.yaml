@@ -1,0 +1,385 @@
+# =============================================================================
+# Tree-of-Writing Prompt Macros
+# All prompts used in the evaluation pipeline are defined here.
+# Variables use {variable_name} syntax for runtime substitution.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Edge Weighting Prompt
+# ---------------------------------------------------------------------------
+edge_weighting: |
+  Please assign a weight to each evaluation dimension based on the following writing instruction and evaluation dimensions. Follow these rules when assigning weights:
+
+  1. The sum of the weights of all evaluation dimensions must equal 1.
+
+  2. The weights should be floating-point numbers between 0 and 1, rounded to a maximum of two decimal places. In rare cases, negative weights are allowed but no lower than -1.
+
+  3. Each dimension's weight should be reasonably allocated according to its relevance to the characteristics of the writing instruction. Negative weights are permitted. For example, in argumentative writing, the weight for emotional expression can be set very low (e.g., 0~0.1) since emotional expression may hinder the rigor of argumentation.
+
+  4. After assigning weights to all dimensions, provide a brief explanation for your choices.
+
+  [Writing Instruction Start]
+  {instruction}
+  [Writing Instruction End]
+
+  [Evaluation Dimensions Start]
+  1. Introduction and Conclusion: The introduction should be engaging and innovative; the conclusion should go beyond mere summary, aiming to impress or resonate deeply, and avoid formulaic openings or endings.
+  2. Language and Rhetoric: Rich vocabulary and clear sentences; the writing should vividly describe objects (scenery, people, psychology, actions, etc.) and make skillful use of rhetoric or writing techniques (e.g., metaphor, parallelism).
+  3. Argumentative Logic: Logical progression should flow seamlessly, leading readers naturally from common knowledge to deeper thoughts; argumentation must be solid and avoid jumping to conclusions or excessive slogan-style assertions.
+  4. Emotional Expression: Tailored to the target audience and writing content, emotions conveyed by the author or characters should evoke strong resonance in readers.
+  [Evaluation Dimensions End]
+
+  Please output ONLY a JSON object with this exact format (no other text):
+  {{"weights": [w1, w2, w3, w4], "explanation": "..."}}
+
+# ---------------------------------------------------------------------------
+# Content Trait Prompts (Leaf Nodes of V_C)
+# ---------------------------------------------------------------------------
+
+opening_ending: |
+  Please act as a professional writing reviewer and evaluate the quality of the opening and closing sections of the "Writing to Be Evaluated" and the "Reference Writing." Your task is to analyze the strengths and weaknesses of the "Writing to Be Evaluated" based on the provided evaluation criteria and assign it a score between 1 to 10, along with a brief explanation of your reasoning.
+
+  The following content will be provided:
+  - **Evaluation Criteria**: Includes multiple dimensions and specific questions to help assess the quality of the opening and closing sections.
+  - **Writing Instructions**: The requirements, background, and main theme of the two pieces of writing.
+  - **Reference Writing and Writing to Be Evaluated**: Two pieces of writing excerpts to be compared.
+
+  ### Evaluation Criteria
+
+  #### A. Evaluation of Opening Quality
+  1. **Ability to attract the reader's attention**
+     - Does the opening grab the reader's attention and make them want to continue reading?
+     - Does it achieve this by using thought-provoking questions, engaging stories, shocking facts, or data?
+  2. **Clear introduction of the topic**
+     - Does the opening clearly convey the article's topic and direction?
+     - Does it establish the overall logical structure of the article, giving readers a clear expectation?
+  3. **Suitability for the target audience**
+     - Does the opening align with the target audience's interests or knowledge background?
+     - Is the language style suitable for the type of article?
+  4. **Avoidance of clichés or irrelevant content**
+     - Does the opening avoid overly common, flat, or dull phrasing?
+     - Does it go straight to the topic rather than being overly long or tangential?
+  5. **Appropriate emotional and atmospheric engagement**
+     - Does the writing create strong emotional impact or an engaging atmosphere?
+
+  #### B. Evaluation of Closing Quality
+  1. **Summarization of core ideas** - Does the conclusion clearly summarize the content and reinforce the central theme?
+  2. **Deepening the theme** - Does the conclusion help readers understand the significance of the article's message in greater depth?
+  3. **Leaving a strong impression** - Does the conclusion evoke emotional resonance, thought, or motivate action?
+  4. **Structural and logical completeness** - Does the conclusion echo the opening and the article's overall structure?
+  5. **Avoidance of excessive length or repetition** - Is the conclusion concise and impactful?
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Be Evaluated]
+  {content}
+
+  Evaluation Process:
+  1. **Strengths and Weaknesses Comparative Analysis**: Analyze both writings' opening and closing sections.
+  2. **Scoring and Reference Baseline**: The "Reference Writing" is assigned a fixed baseline score of **6**. Score the "Writing to Be Evaluated":
+     - **1-2**: Significantly weaker across nearly all criteria.
+     - **3-4**: Weaker in most criteria but slightly superior in a few areas.
+     - **5-6**: Balanced performance, generally equivalent overall.
+     - **7-8**: Stronger in most criteria with only minor shortcomings.
+     - **9-10**: Excels across nearly all criteria.
+  3. **Output Format**: Score: [[X]]
+
+  Use double square brackets (e.g., [[6]]) to indicate the score. Final scores must be whole numbers between 1 and 10.
+  Please proceed with the evaluation.
+
+language_rhetoric: |
+  Please evaluate the following "writing for evaluation" and "reference writing" in terms of language richness and appropriateness of rhetoric. Analyze strengths and weaknesses, assigning a score from 1 to 10.
+
+  [Assessment Criteria]
+  I. Positive Scenarios
+  1. Language Richness - Diverse vocabulary, expressiveness, meticulous word choices.
+  2. Excellence of Rhetoric - Proper use of metaphors, parallelism, personification, etc.
+  3. Structure and Logic - Compelling opening, impactful conclusion.
+
+  II. Negative Scenarios
+  1. Language Deficiency - Monotonous vocabulary, poor sentences, generic content.
+  2. Inappropriate Rhetoric - Forced metaphors, overly complex sentences.
+  3. Structural Problems - Over-reliance on mechanical connectors.
+  4. Mixed Language Issues - Unnecessary language mixing (deduct points).
+  5. Content Limitations - Lack of detailed portrayal or circular reasoning.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing for Evaluation]
+  {content}
+
+  Scoring: Reference Writing is fixed at 6 points as baseline.
+  - 1-2: Significantly more negative scenarios, lacking positive scenarios.
+  - 3-4: Somewhat more negative scenarios, fewer positive scenarios.
+  - 5-6: Balanced good and bad on par with reference.
+  - 7-8: Similar negatives but more positives, natural flow.
+  - 9-10: Significantly more positives, rich and well-balanced expression.
+
+  Output: Score: [[X]] (integer 1-10 in double brackets)
+
+argumentative_logic: |
+  Please act as a professional writing reviewer and evaluate the reasoning logic in the "Writing to Be Evaluated" and "Reference Writing."
+
+  [Evaluation Criteria]
+  Core focus of content logic:
+  1. Consistency in person/point of view
+  2. Logical coherence - internally consistent reasoning without abrupt breaks
+  3. Consistency in language style and tone
+
+  Ideal Scenarios:
+  - Argumentative: Tightly interconnected reasoning with clear logical layers.
+  - Speeches: Clear logic from problem analysis to specific solutions.
+  - Applications/Reports: Logical structure like "Objective → Analysis → Challenges → Solutions → Results."
+
+  Poor Performances:
+  - Argumentative: Lists opinions without reasoning (deduct 3+ points).
+  - Speeches: Analysis lacks depth (deduct 3-6 points).
+  - Applications: Superficial content without analysis (deduct 3-6 points).
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Be Evaluated]
+  {content}
+
+  Scoring: Reference Writing is 8-point standard. Start at 8, deduct for weaknesses:
+  - 0-1 minor flaws: deduct 0-3 points.
+  - 1-2 minor weaknesses: deduct 3-6 points.
+  - 2+ minor or 1 significant problem: deduct 6-8 points.
+  - Clear advantages over reference: add up to 2 points.
+
+  Output: Score: [[X]] (integer 1-10 in double brackets)
+
+emotion: |
+  Please act as a professional writing reviewer and evaluate emotional expression quality in the "Writing to Evaluate" and "Reference Writing."
+
+  [Evaluation Criteria]
+  Emotional expression must connect to intended readers.
+
+  Good Conditions:
+  1. Emotion integrated into descriptions, enhancing emotional tension.
+  2. Skillful use of rhetorical devices for emotional impact.
+  3. Tone and vocabulary match target reader's style, genuine and fluid.
+  4. Emotional expression aligns with main theme.
+
+  Poor Conditions:
+  1. Ineffective or missing emotional expression.
+  2. Misuse of rhetorical devices weakening emotion.
+  3. Superficial, exaggerated, or unnatural expression.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Evaluate]
+  {content}
+
+  Scoring: Reference Writing fixed at 6 as baseline.
+  - 1-2: Significantly more poor conditions, monotonous and shallow.
+  - 3-4: Somewhat more poor conditions, mediocre emotional portrayal.
+  - 5-6: Balanced conditions similar to reference.
+  - 7-8: Additional good conditions, varied complementary emotions.
+  - 9-10: Significantly more good conditions, rich and nuanced.
+
+  Output: Score: [[X]] (integer 1-10 in double brackets)
+
+# ---------------------------------------------------------------------------
+# Proper Instance (Evidence Quality) - not in paper appendix, using rubric
+# ---------------------------------------------------------------------------
+proper_instance: |
+  Please evaluate the use of examples and evidence in the "Writing to Be Evaluated" compared to the "Reference Writing."
+
+  Evaluation Criteria:
+  1. Are the examples factually correct and relevant to the argument?
+  2. Are examples specific and detailed rather than vague?
+  3. Is there diversity in evidence types (theoretical, factual, data, expert opinions)?
+  4. Do examples effectively support and strengthen the main argument?
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Be Evaluated]
+  {content}
+
+  Scoring: Reference Writing fixed at 6 as baseline.
+  - 1-2: Examples are factually wrong, irrelevant, or absent.
+  - 3-4: Few examples, mostly vague or weakly connected.
+  - 5-6: Comparable to reference in example usage.
+  - 7-8: Better examples, more diverse and specific.
+  - 9-10: Exceptional examples, rich, precise, and compelling.
+
+  Output: Score: [[X]] (integer 1-10 in double brackets)
+
+# ---------------------------------------------------------------------------
+# Format Trait Prompts (Leaf Nodes of V_F)
+# ---------------------------------------------------------------------------
+
+plots_structure: |
+  Please act as a professional writing evaluator and assess the appropriateness of the plot design and development in the "Writing to be Evaluated" compared to the "Reference Writing."
+
+  [Evaluation Criteria]
+  I. Good Scenarios
+  1. Structure & Logic: Clear, well-organized, logically sound. Smooth transitions.
+  2. Narrative Techniques: Skillful flashbacks, well-paced progression, creates tension.
+  3. Thematic Value: Novel and meaningful content, insightful perspectives.
+  4. Fit to Writing Type: Appropriate for genre (argumentative, fiction, prose, report, etc.)
+
+  II. Bad Scenarios
+  1. Structure Issues: Disorganized, no hierarchy, abrupt jumps.
+  2. Narrative Issues: Improper technique use, loose plot, unconvincing logic.
+  3. Thematic Issues: Cliché, shallow, lacks unity.
+  4. Appropriateness Issues: Deviates from genre expectations.
+  5. Language Issues: Simplistic, obscure, formulaic.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to be Evaluated]
+  {content}
+
+  Scoring: Reference Writing fixed at 6.
+  - 1-2: Clearly more bad than good, dry recounting, weak logic.
+  - 3-4: More bad than good, plain narrative, bland plot.
+  - 5-6: Equivalent good and bad, mostly fluent, no major flaws.
+  - 7-8: Clear strengths, highlights in language or plot.
+  - 9-10: Obviously more good elements, full tension, rigorous logic.
+
+  Output: Score: [[X]] (integer 1-10 in double brackets)
+
+paragraphing: |
+  Please evaluate the rationality of chapter and paragraph division in the writing below:
+
+  Principles:
+  1. Coordination between sections: Avoid overly long paragraphs (>500 chars) or one chapter disproportionately longer than all others.
+  2. Necessity of chapter division: Chapter titles needed for lengthy texts with structural requirements. Avoid meaningless splits. Each chapter ideally >800 chars.
+  3. Necessity of paragraph division: Avoid excessive single-sentence paragraphs. Avoid lumping too many themes into one paragraph. Each paragraph ideally >50 chars.
+
+  Score:
+  - 3 points: Division is reasonable.
+  - 2 points: Division is somewhat flawed.
+  - 1 point: Division is clearly uncoordinated or missing.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Writing for Evaluation]
+  {content}
+
+  Provide your score enclosed in double square brackets: "Overall score: [[X]]. Reason..."
+
+impression: |
+  Please provide an overall impression score based on the following writing instructions and content. You may focus on the attractiveness of the beginning and ending, the fluency and coherence of the text, the appropriateness of the paragraph structure, and the avoidance of excessive use of bullet points and lists.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing for Evaluation]
+  {content}
+
+  Please provide an integer overall impression score between 1 and 10, and briefly explain your reasoning. Format the score within double square brackets, e.g., "Overall score: [[8]]. Reason..."
+
+# ---------------------------------------------------------------------------
+# Chain-of-Writing (Back-Construction) Prompt for Open Task
+# ---------------------------------------------------------------------------
+chain_of_writing: |
+  Assume that you are to provide instructions to a large language model, asking it to generate the following fiction. Provide detailed instructions with the following structure:
+
+  1. Plot and Structure: Summarize the main content in one sentence of no more than 100 words.
+  2. Character Development: Describe the personalities, experiences, and relationships of the main characters in no more than 100 words per character, with a maximum of 5 characters.
+  3. Theme and Message: Summarize the theme and message in no more than 100 words.
+  4. Language and Style: Describe the overall linguistic style and level of detail, in no more than 100 words.
+  5. Emotional Resonance: Specify the type of emotional resonance to evoke in no more than 100 words.
+  6. Innovation and Originality: Describe how to demonstrate uniqueness in no more than 100 words.
+
+  Output using this format:
+  <Plot and Structure Start>
+  xxxx
+  <Plot and Structure End>
+  <Character Development Start>
+  xxxx
+  <Character Development End>
+  <Theme and Message Start>
+  xxxx
+  <Theme and Message End>
+  <Language and Style Start>
+  xxxx
+  <Language and Style End>
+  <Emotional Resonance Start>
+  xxxx
+  <Emotional Resonance End>
+  <Innovation and Originality Start>
+  xxxx
+  <Innovation and Originality End>
+
+  Please base your response on the following target fiction.
+
+  [Target Fiction Start]
+  {content}
+  [Target Fiction End]
+
+# ---------------------------------------------------------------------------
+# Single-Pass LLM Evaluation Baseline
+# ---------------------------------------------------------------------------
+llm_single_pass: |
+  You are a professional writing evaluator. Please evaluate the "Writing to Be Evaluated" based on the writing instructions and reference writing provided.
+
+  Consider the following dimensions:
+  1. Content quality (theme clarity, argument depth, evidence usage)
+  2. Language quality (vocabulary richness, rhetoric, fluency)
+  3. Structure (organization, paragraph design, logical flow)
+  4. Overall impression (engagement, originality, emotional impact)
+
+  [Writing Instructions]
+  {instruction}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Be Evaluated]
+  {content}
+
+  Please provide a single overall score from 1 to 10 and a brief explanation.
+  Output format: Score: [[X]]
+
+# ---------------------------------------------------------------------------
+# Genre-Specific Rubric Prompts (used for Guide/Open tasks)
+# ---------------------------------------------------------------------------
+rubric_evaluation: |
+  As a professional writing reviewer, please evaluate the following writing based on the provided genre-specific rubric criteria. For each dimension, assign a score from 1 to 10 and provide a brief justification.
+
+  [Writing Instructions]
+  {instruction}
+
+  [Genre Rubric]
+  {rubric}
+
+  [Reference Writing]
+  {reference}
+
+  [Writing to Be Evaluated]
+  {content}
+
+  Provide dimension scores and an overall score (1-10).
+  Output the overall score in format: Score: [[X]]

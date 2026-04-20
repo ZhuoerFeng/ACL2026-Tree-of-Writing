@@ -1,0 +1,24 @@
+# API Configuration
+# Override via environment variables: TOW_BASE_URL, TOW_API_KEY, TOW_MODEL
+api:
+  base_url: "https://api.openai.com/v1"
+  api_key: ""
+  model: "gpt-4o"
+  temperature: 0.0
+  max_tokens: 4096
+  timeout: 120
+
+# Data paths (relative to project root)
+data:
+  root: "../data"
+  tasks:
+    - completion
+    - guide
+    - open
+
+# Evaluation settings
+evaluation:
+  # Number of LLM judges for scoring (majority vote / average)
+  num_judges: 1
+  # Whether to use Chain-of-Writing for open task
+  use_cow_for_open: true

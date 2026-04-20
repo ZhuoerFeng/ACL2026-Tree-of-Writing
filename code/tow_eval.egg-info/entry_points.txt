@@ -1,0 +1,4 @@
+[console_scripts]
+tow-baseline = tow.cli:run_baseline
+tow-eval = tow.cli:run_tow
+tow-split = tow.cli:split_data
