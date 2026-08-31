@@ -129,9 +129,66 @@ def run_baseline():
         print(f"Completed {len(results)} LLM baseline evaluations.")
 
 
+def run_infer():
+    """CLI: Generate per-model writing outputs (the infers) for a task."""
+    parser = argparse.ArgumentParser(
+        description="Generate model writing outputs for a task (the inference step)."
+    )
+    parser.add_argument(
+        "--task",
+        choices=["completion", "guide", "open"],
+        required=True,
+        help="Task to generate outputs for",
+    )
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="Model id sent to the API endpoint (configured via TOW_BASE_URL)",
+    )
+    parser.add_argument(
+        "--name",
+        default=None,
+        help="Output label / filename (default: --model). Results go to "
+        "data/{task}/inferences/{name}.jsonl. Use when the API id differs from "
+        "the desired file name (e.g. an openrouter:... id vs. a clean label).",
+    )
+    parser.add_argument(
+        "--parallel",
+        type=int,
+        default=60,
+        help="Number of worker threads (default: 60)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Max number of items to generate (for testing)",
+    )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="Path to extra settings YAML file",
+    )
+    args = parser.parse_args()
+
+    from tow.config import load_settings
+    from tow.inference.generate import run_inference
+
+    settings = load_settings(args.config)
+    out_path = run_inference(
+        task=args.task,
+        model=args.model,
+        name=args.name,
+        parallel=args.parallel,
+        limit=args.limit,
+        settings=settings,
+    )
+    print(f"Wrote outputs to {out_path}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python -m tow.cli {split|tow|baseline}")
+        print("Usage: python -m tow.cli {split|tow|baseline|infer}")
         sys.exit(1)
 
     cmd = sys.argv[1]
@@ -142,6 +199,8 @@ if __name__ == "__main__":
         run_tow()
     elif cmd == "baseline":
         run_baseline()
+    elif cmd == "infer":
+        run_infer()
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)

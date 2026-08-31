@@ -4,3 +4,4 @@ jieba>=0.42
 rouge-chinese>=1.0.3
 nltk>=3.8
 tqdm>=4.60
+tenacity>=8.0
