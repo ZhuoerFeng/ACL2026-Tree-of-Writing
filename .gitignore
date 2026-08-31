@@ -24,3 +24,5 @@ hf-dataset/
 .idea/
 .vscode/
 __pycache__
+
+code/tow_eval.egg-info
