@@ -61,6 +61,9 @@ ACL2026-ToW/
         ├── data/
         │   ├── loader.py      # Data loading and alignment
         │   └── splitter.py    # Inference result splitting
+        ├── inference/
+        │   ├── prompts.py     # Generation prompts + output contract (verbatim)
+        │   └── generate.py    # Threaded, resumable model output generation
         ├── evaluation/
         │   ├── pipeline.py    # Main ToW evaluation pipeline
         │   ├── weight.py      # Edge weighting (LLM-based)
@@ -100,7 +103,33 @@ All evaluation prompts are defined in `code/config/prompts.yaml`. You can modify
 
 ## Usage
 
-### 1. Run Tree-of-Writing Evaluation
+### 1. Generate Model Outputs (Inference)
+
+Generate a model's writing outputs for a task — this reproduces the per-model
+`inferences/` files in the benchmark. Point the OpenAI-compatible client at any
+provider via environment variables, then run `tow-infer`:
+
+```bash
+export TOW_BASE_URL="https://api.openai.com/v1"   # or any OpenAI-compatible endpoint
+export TOW_API_KEY="your-api-key"
+
+tow-infer --task guide --model gpt-4o-2024-11-20            # -> data/guide/inferences/gpt-4o-2024-11-20.jsonl
+tow-infer --task open  --model claude-3-5-sonnet-20241022  # writes one record per item
+tow-infer --task completion --model deepseek-chat --limit 10   # quick test on 10 items
+```
+
+- `--model` is the id sent to the endpoint; `--name` overrides the output file
+  name when the two differ (e.g. `--model openrouter:deepseek-chat --name deepseek-chat`).
+- Runs are **resumable** — re-running skips items already present in the output file.
+- Outputs land in `data/{task}/inferences/{name}.jsonl`, ready for `tow-eval`.
+
+**Reproducibility notes.** The generation prompts and the required
+`<我的生成开始>…<我的生成结束>` output contract are defined verbatim in
+`code/tow/inference/prompts.py`. No decoding parameters (temperature / top_p /
+max_tokens) are set — the released outputs were produced with each provider's
+API defaults; set them in `settings.yaml` only if you intend to deviate.
+
+### 2. Run Tree-of-Writing Evaluation
 
 ```bash
 tow-eval --task guide                             # Evaluate all models on guide task
@@ -108,7 +137,7 @@ tow-eval --task open --models gpt-4o deepseek-r1  # Specific models
 tow-eval --task completion --limit 10             # Test with 10 items
 ```
 
-### 2. Run Baselines
+### 3. Run Baselines
 
 ```bash
 # BLEU/ROUGE (no API needed)

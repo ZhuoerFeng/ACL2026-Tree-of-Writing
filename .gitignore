@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# HF dataset staging (generated, not source)
+hf-dataset/
+
+# Secrets / local config
+.env
+*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+__pycache__
