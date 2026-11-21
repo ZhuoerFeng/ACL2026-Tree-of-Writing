@@ -45,15 +45,14 @@ def plan_content_weights(
 
     # The prompt only asks for 4 dimensions.
     # We assign a default to "proper_instance" and renormalize to 5 dims.
-    if len(weights) == 4:
+    weight_sum = sum(weights)
+    if len(weights) == 4 and all(-1.0 <= w <= 1.0 for w in weights) and weight_sum > 1e-9:
         # Insert proper_instance weight (index 2) as average of others, then renormalize
-        avg = sum(weights) / len(weights)
+        avg = weight_sum / len(weights)
         proper_w = max(0.0, min(avg, 0.3))
         weights_5 = [weights[0], weights[1], proper_w, weights[2], weights[3]]
         total = sum(weights_5)
-        if abs(total) > 1e-9:
-            weights_5 = [w / total for w in weights_5]
-        return weights_5
+        return [w / total for w in weights_5]
 
     # Fallback: equal weights
     return [0.2] * 5
@@ -61,20 +60,23 @@ def plan_content_weights(
 
 def _parse_weights(response: str) -> list[float]:
     """Parse weight values from LLM response."""
-    # Try JSON parse
-    try:
-        # Find JSON object in response
-        json_match = re.search(r"\{.*?\"weights\".*?\}", response, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group())
-            return [float(w) for w in data["weights"]]
-    except (json.JSONDecodeError, KeyError, TypeError):
-        pass
+    json_start = response.find("{")
+    if json_start != -1:
+        try:
+            data, _ = json.JSONDecoder().raw_decode(response, json_start)
+            values = data["weights"]
+            if isinstance(values, list) and not any(isinstance(w, bool) for w in values):
+                return [float(w) for w in values]
+        except (ValueError, KeyError, TypeError, OverflowError):
+            pass
 
-    # Fallback: extract numbers
+        # A failed JSON attempt may contain unrelated numbers in its explanation.
+        return []
+
+    # Fallback for plain text responses
     numbers = re.findall(r"[-+]?\d*\.?\d+", response)
     floats = [float(n) for n in numbers if -1.0 <= float(n) <= 1.0]
     if len(floats) >= 4:
         return floats[:4]
 
-    return [0.25, 0.25, 0.25, 0.25]
+    return []
